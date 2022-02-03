@@ -32,9 +32,11 @@ public class DroneService {
 
     @Transactional(readOnly = true)
     public Flux<DroneDto> fetchAvailableDrones() {
-        Specification<DroneEntity> idleDroneSpecification = (root, query, cb) ->
-                cb.equal(root.get("state"), DroneState.IDLE);
-        return Flux.defer(() -> Flux.fromIterable(droneRepository.findAll(idleDroneSpecification))
+        Specification<DroneEntity> idleAndLoadingDroneSpecification = (root, query, cb) ->
+                cb.in(root.get("state"))
+                        .value(DroneState.IDLE)
+                        .value(DroneState.LOADING);
+        return Flux.defer(() -> Flux.fromIterable(droneRepository.findAll(idleAndLoadingDroneSpecification))
                         .subscribeOn(Schedulers.boundedElastic()))
                 .map(drone -> DroneDto.builder()
                         .id(drone.getId())

@@ -1,5 +1,6 @@
 package com.musalasoft.drone.medication;
 
+import com.musalasoft.drone.DroneConfiguration;
 import com.musalasoft.drone.drone.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,6 +24,7 @@ import static java.lang.String.format;
 public class MedicationService {
     private final MedicationEntityRepository medicationEntityRepository;
     private final DroneRepository droneRepository;
+    private final DroneConfiguration droneConfiguration;
 
     @Transactional
     public Mono<MedicationDto> loadMedication(long droneId, MedicationRequestDto medicationRequestDto) {
@@ -88,12 +90,12 @@ public class MedicationService {
                 .subscribeOn(Schedulers.boundedElastic()));
 
         return loadedWeightThusFarMono.flatMap(weightLoaded -> Mono.defer(() -> Mono.fromCallable(() -> {
-                    DroneState state = weightLoaded == droneDto.getWeightLimit() ? DroneState.LOADED : DroneState.LOADING;
-                    droneRepository.updateDroneState(droneId, state);
+                            DroneState state = weightLoaded == droneDto.getWeightLimit() ? DroneState.LOADED : DroneState.LOADING;
+                            droneRepository.updateDroneState(droneId, state);
 
-                    return Optional.empty();
-                })
-                .publishOn(Schedulers.boundedElastic())))
+                            return Optional.empty();
+                        })
+                        .publishOn(Schedulers.boundedElastic())))
                 .flatMap(Mono::justOrEmpty)
                 .then();
     }
@@ -122,8 +124,10 @@ public class MedicationService {
     }
 
     private void validateDroneBatteryCapacity(DroneDto drone) {
-        if (drone.getBatteryCapacity() < 25) {
-            var message = format("Drone battery capacity is below: %d", 25);
+        DroneConfiguration.Battery battery = droneConfiguration.getBattery();
+        final var minimumCapacity = battery.getMinimalCapacity();
+        if (drone.getBatteryCapacity() < minimumCapacity) {
+            var message = format("Drone battery capacity is below: %d", minimumCapacity);
             throw new DroneBatteryCapacityLowException(message);
         }
     }

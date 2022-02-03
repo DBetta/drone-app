@@ -7,7 +7,6 @@
     <changeSet id="03-02-2022-001" author="denis.gitonga">
         <sql dbms="postgresql" endDelimiter=";">
             create schema drone;
-            CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
         </sql>
     </changeSet>
 

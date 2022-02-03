@@ -38,8 +38,8 @@ public class DroneService {
                 .state(createDroneDto.getState())
                 .weightLimit(createDroneDto.getWeightLimit())
                 .build();
-        return Mono.fromCallable(() -> droneRepository.save(droneEntity))
-                .subscribeOn(Schedulers.boundedElastic())
+        return Mono.defer(() -> Mono.fromCallable(() -> droneRepository.save(droneEntity))
+                        .publishOn(Schedulers.boundedElastic()))
                 .map(drone -> DroneDto.builder()
                         .id(drone.getId())
                         .serialNumber(drone.getSerialNumber())
@@ -57,8 +57,8 @@ public class DroneService {
         Specification<DroneEntity> serialNumberPredicate = (root, query, cb) ->
                 cb.equal(cb.lower(root.get("serialNumber")), StringUtils.lowerCase(createDroneDto.getSerialNumber()));
 
-        return Mono.fromCallable(() -> droneRepository.findAll(serialNumberPredicate))
-                .publishOn(Schedulers.boundedElastic())
+        return Mono.defer(() -> Mono.fromCallable(() -> droneRepository.findAll(serialNumberPredicate))
+                        .subscribeOn(Schedulers.boundedElastic()))
                 .flatMap(droneEntities -> {
                     if (droneEntities.isEmpty()) return Mono.empty();
 

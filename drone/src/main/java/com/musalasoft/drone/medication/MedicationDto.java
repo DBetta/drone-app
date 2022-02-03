@@ -15,8 +15,6 @@ public class MedicationDto {
 
     private Long id;
 
-    private DroneDto drone;
-
     private String name;
 
     private int weight;

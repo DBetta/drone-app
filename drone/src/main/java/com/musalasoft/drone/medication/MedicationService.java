@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -62,6 +63,25 @@ public class MedicationService {
                         .then(Mono.justOrEmpty(medicationDto)));
     }
 
+    @Transactional(readOnly = true)
+    public Flux<MedicationDto> getDroneMedicationsLoaded(long droneId) {
+
+        Specification<MedicationEntity> droneIdSpecification = (root, query, cb) ->
+                cb.equal(root.get("droneId"), droneId);
+
+        return Flux.defer(() -> Flux.fromIterable(medicationEntityRepository.findAll(droneIdSpecification))
+                        .subscribeOn(Schedulers.boundedElastic()))
+                .map(medication -> MedicationDto.builder()
+                        .id(medication.getId())
+                        .code(medication.getCode())
+                        .image(medication.getImage())
+                        .weight(medication.getWeight())
+                        .name(medication.getName())
+                        .createdAt(medication.getCreatedAt())
+                        .updatedAt(medication.getUpdatedAt())
+                        .build());
+    }
+
     private Mono<Void> updateDroneStateToLoading(final long droneId) {
         return Mono.defer(() -> Mono.fromCallable(() -> {
                             droneRepository.updateDroneState(droneId, DroneState.LOADING);
@@ -87,7 +107,6 @@ public class MedicationService {
                         .publishOn(Schedulers.boundedElastic()))
                 .map(medication -> MedicationDto.builder()
                         .id(medication.getId())
-                        .drone(drone)
                         .code(medication.getCode())
                         .image(medication.getImage())
                         .weight(medication.getWeight())

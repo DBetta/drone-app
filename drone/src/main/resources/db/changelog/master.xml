@@ -11,5 +11,8 @@
     </changeSet>
 
     <include file="db/changelog/drone.xml" relativeToChangelogFile="false" id="03-02-2022-002" author="denis.gitonga"/>
-    <include file="db/changelog/medication.xml" relativeToChangelogFile="false" id="03-02-2022-003" author="denis.gitonga"/>
+    <include file="db/changelog/medication.xml" relativeToChangelogFile="false" id="03-02-2022-003"
+             author="denis.gitonga"/>
+    <include file="db/changelog/battery_audit.xml" relativeToChangelogFile="false" id="03-02-2022-004"
+             author="denis.gitonga"/>
 </databaseChangeLog>

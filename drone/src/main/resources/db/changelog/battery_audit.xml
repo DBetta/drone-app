@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+
+    <changeSet id="03-02-2022-001" author="denis.gitonga">
+        <createTable tableName="drone_battery_audits" schemaName="drone">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="drone_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="drone_battery_audits_drone_id_fk"
+                             referencedTableSchemaName="drone"
+                             referencedColumnNames="id"
+                             referencedTableName="drones"
+                />
+            </column>
+            <column name="battery_capacity" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime" defaultValue="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

@@ -28,4 +28,9 @@ public class DroneController {
         return droneService.fetchAvailableDrones();
     }
 
+    @GetMapping("/{droneId}/battery-capacity")
+    public Mono<DroneBatteryCapacityDto> getBatteryCapacity(@PathVariable Long droneId) {
+        return droneService.getDroneBatteryCapacity(droneId);
+    }
+
 }

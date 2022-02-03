@@ -48,6 +48,18 @@ public class DroneService {
                         .build());
     }
 
+    @Transactional(readOnly = true)
+    public Mono<DroneBatteryCapacityDto> getDroneBatteryCapacity(long droneId) {
+        return Mono.defer(() -> Mono.fromCallable(() -> droneRepository.findById(droneId))
+                        .subscribeOn(Schedulers.boundedElastic()))
+                .flatMap(Mono::justOrEmpty)
+                .map(drone -> DroneBatteryCapacityDto.builder()
+                        .id(drone.getId())
+                        .serialNumber(drone.getSerialNumber())
+                        .batteryCapacity(drone.getBatteryCapacity())
+                        .build());
+    }
+
     @NotNull
     private Mono<DroneDto> saveDrone(CreateDroneDto createDroneDto) {
         DroneEntity droneEntity = DroneEntity.builder()

@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -27,6 +28,24 @@ public class DroneService {
         Mono<DroneDto> droneDtoMono = saveDrone(createDroneDto);
 
         return serialNumberNotExisting.then(droneDtoMono);
+    }
+
+    @Transactional(readOnly = true)
+    public Flux<DroneDto> fetchAvailableDrones() {
+        Specification<DroneEntity> idleDroneSpecification = (root, query, cb) ->
+                cb.equal(root.get("state"), DroneState.IDLE);
+        return Flux.defer(() -> Flux.fromIterable(droneRepository.findAll(idleDroneSpecification))
+                        .subscribeOn(Schedulers.boundedElastic()))
+                .map(drone -> DroneDto.builder()
+                        .id(drone.getId())
+                        .serialNumber(drone.getSerialNumber())
+                        .batteryCapacity(drone.getBatteryCapacity())
+                        .model(drone.getModel())
+                        .state(drone.getState())
+                        .weightLimit(drone.getWeightLimit())
+                        .createdAt(drone.getCreatedAt())
+                        .updatedAt(drone.getUpdatedAt())
+                        .build());
     }
 
     @NotNull

@@ -48,8 +48,8 @@ public class MedicationService {
                                 .updatedAt(drone.getUpdatedAt())
                                 .build();
                         validateDroneState(droneDto);
-                        validateDroneWeightLimit(droneDto, tuple.getT2(), medicationRequestDto);
                         validateDroneBatteryCapacity(droneDto);
+                        validateDroneWeightLimit(droneDto, tuple.getT2(), medicationRequestDto);
 
                         return Mono.just(droneDto);
                     } catch (Throwable throwable) {
@@ -58,9 +58,9 @@ public class MedicationService {
                 });
 
         return validateDroneLoadingMono
-                .flatMap(drone -> saveMedication(drone, medicationRequestDto))
-                .flatMap(medicationDto -> updateDroneStateToLoading(droneId)
-                        .then(Mono.justOrEmpty(medicationDto)));
+                .zipWhen(drone -> saveMedication(drone, medicationRequestDto))
+                .flatMap(tuple2 -> updateDroneStateToLoading(droneId, tuple2.getT1())
+                        .then(Mono.justOrEmpty(tuple2.getT2())));
     }
 
     @Transactional(readOnly = true)
@@ -82,13 +82,18 @@ public class MedicationService {
                         .build());
     }
 
-    private Mono<Void> updateDroneStateToLoading(final long droneId) {
-        return Mono.defer(() -> Mono.fromCallable(() -> {
-                            droneRepository.updateDroneState(droneId, DroneState.LOADING);
+    private Mono<Void> updateDroneStateToLoading(final long droneId, DroneDto droneDto) {
 
-                            return Optional.empty();
-                        })
-                        .publishOn(Schedulers.boundedElastic()))
+        Mono<Integer> loadedWeightThusFarMono = Mono.defer(() -> Mono.fromCallable(() -> medicationEntityRepository.getDroneLoadedCapacity(droneId))
+                .subscribeOn(Schedulers.boundedElastic()));
+
+        return loadedWeightThusFarMono.flatMap(weightLoaded -> Mono.defer(() -> Mono.fromCallable(() -> {
+                    DroneState state = weightLoaded == droneDto.getWeightLimit() ? DroneState.LOADED : DroneState.LOADING;
+                    droneRepository.updateDroneState(droneId, state);
+
+                    return Optional.empty();
+                })
+                .publishOn(Schedulers.boundedElastic())))
                 .flatMap(Mono::justOrEmpty)
                 .then();
     }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -20,6 +21,11 @@ public class DroneController {
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<DroneDto> createDrone(@Validated @RequestBody CreateDroneDto createDroneDto) {
         return droneService.createDrone(createDroneDto);
+    }
+
+    @GetMapping("available")
+    public Flux<DroneDto> getAvailableDrones() {
+        return droneService.fetchAvailableDrones();
     }
 
 }
